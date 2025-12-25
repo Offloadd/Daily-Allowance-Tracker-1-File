@@ -6,16 +6,28 @@
 // ============================================================================
 
 async function signIn() {
+    console.log('Sign in button clicked');
     const email = document.getElementById('emailInput').value;
     const password = document.getElementById('passwordInput').value;
+    
+    console.log('Email:', email);
+    console.log('Password length:', password ? password.length : 0);
     
     if (!email || !password) {
         alert('Please enter email and password');
         return;
     }
     
+    if (!window.auth) {
+        alert('Firebase not initialized. Please refresh the page.');
+        console.error('Auth not available:', window.auth);
+        return;
+    }
+    
     try {
-        await auth.signInWithEmailAndPassword(email, password);
+        console.log('Attempting sign in...');
+        await window.auth.signInWithEmailAndPassword(email, password);
+        console.log('Sign in successful');
     } catch (error) {
         console.error('Sign in error:', error);
         alert(getErrorMessage(error));
@@ -23,8 +35,12 @@ async function signIn() {
 }
 
 async function signUp() {
+    console.log('Sign up button clicked');
     const email = document.getElementById('emailInput').value;
     const password = document.getElementById('passwordInput').value;
+    
+    console.log('Email:', email);
+    console.log('Password length:', password ? password.length : 0);
     
     if (!email || !password) {
         alert('Please enter email and password');
@@ -36,8 +52,16 @@ async function signUp() {
         return;
     }
     
+    if (!window.auth) {
+        alert('Firebase not initialized. Please refresh the page.');
+        console.error('Auth not available:', window.auth);
+        return;
+    }
+    
     try {
-        await auth.createUserWithEmailAndPassword(email, password);
+        console.log('Attempting to create account...');
+        await window.auth.createUserWithEmailAndPassword(email, password);
+        console.log('Account created successfully');
         alert('Account created successfully!');
     } catch (error) {
         console.error('Sign up error:', error);
@@ -73,7 +97,7 @@ function getErrorMessage(error) {
 
 function getUserDocRef() {
     if (!window.currentUser) return null;
-    return db.collection('allowanceTracker').doc(window.currentUser.uid);
+    return db.collection('dailyAllowanceTracker').doc(window.currentUser.uid);
 }
 
 async function loadUserData() {

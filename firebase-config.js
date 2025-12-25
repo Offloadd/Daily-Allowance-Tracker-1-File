@@ -1,12 +1,11 @@
-// Firebase configuration
+// Firebase configuration for Allowance Tracker
 const firebaseConfig = {
-    apiKey: "AIzaSyA89BZxelKRoK64JnYtSdWUho2WUfWymII",
-    authDomain: "capacity-monitor.firebaseapp.com",
-    projectId: "capacity-monitor",
-    storageBucket: "capacity-monitor.firebasestorage.app",
-    messagingSenderId: "455641716280",
-    appId: "1:455641716280:web:5848888e290e47114c78cd",
-    measurementId: "G-CGR5R0D1SP"
+    apiKey: "AIzaSyABey4UWE_B-i7Fh0STJA1vOHuzhdYzfMw",
+    authDomain: "allowance-trackers.firebaseapp.com",
+    projectId: "allowance-trackers",
+    storageBucket: "allowance-trackers.firebasestorage.app",
+    messagingSenderId: "61226188478",
+    appId: "1:61226188478:web:c961975945d4dc5075a8ef"
 };
 
 // Initialize Firebase

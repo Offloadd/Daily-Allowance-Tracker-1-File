@@ -2,6 +2,112 @@
 // All data stored in Firestore instead of localStorage
 
 // ============================================================================
+// COLOR SCHEME FUNCTIONS
+// ============================================================================
+
+function getBalanceColor(balance) {
+    if (!data.colorScheme) {
+        // Fallback to default if no color scheme exists
+        return balance >= 0 ? '#4ade80' : '#f87171';
+    }
+    
+    const ranges = balance >= 0 ? data.colorScheme.positive : data.colorScheme.negative;
+    
+    for (let range of ranges) {
+        if (balance >= range.min && balance <= range.max) {
+            return range.color;
+        }
+    }
+    
+    // Fallback
+    return balance >= 0 ? '#4ade80' : '#f87171';
+}
+
+function addColorRange(type) {
+    const minInput = document.getElementById(`${type}Min`);
+    const maxInput = document.getElementById(`${type}Max`);
+    const colorInput = document.getElementById(`${type}Color`);
+    
+    const min = parseFloat(minInput.value);
+    const max = parseFloat(maxInput.value);
+    const color = colorInput.value;
+    
+    if (isNaN(min) || isNaN(max)) {
+        alert('Please enter valid numbers for min and max');
+        return;
+    }
+    
+    if (min > max) {
+        alert('Min must be less than or equal to max');
+        return;
+    }
+    
+    if (type === 'positive' && (min < 0 || max < 0)) {
+        alert('Positive ranges must have values >= 0');
+        return;
+    }
+    
+    if (type === 'negative' && (min > 0 || max > 0)) {
+        alert('Negative ranges must have values <= 0');
+        return;
+    }
+    
+    data.colorScheme[type].push({ min, max, color });
+    
+    // Sort ranges
+    data.colorScheme[type].sort((a, b) => a.min - b.min);
+    
+    minInput.value = '';
+    maxInput.value = '';
+    colorInput.value = '#000000';
+    
+    saveData();
+}
+
+function deleteColorRange(type, index) {
+    data.colorScheme[type].splice(index, 1);
+    saveData();
+}
+
+function editColorRange(type, index) {
+    const range = data.colorScheme[type][index];
+    range.editing = true;
+    updateDisplay();
+}
+
+function saveColorRange(type, index) {
+    const range = data.colorScheme[type][index];
+    
+    const minInput = document.getElementById(`edit-${type}-min-${index}`);
+    const maxInput = document.getElementById(`edit-${type}-max-${index}`);
+    const colorInput = document.getElementById(`edit-${type}-color-${index}`);
+    
+    const min = parseFloat(minInput.value);
+    const max = parseFloat(maxInput.value);
+    const color = colorInput.value;
+    
+    if (isNaN(min) || isNaN(max)) {
+        alert('Please enter valid numbers');
+        return;
+    }
+    
+    if (min > max) {
+        alert('Min must be less than or equal to max');
+        return;
+    }
+    
+    range.min = min;
+    range.max = max;
+    range.color = color;
+    range.editing = false;
+    
+    // Re-sort
+    data.colorScheme[type].sort((a, b) => a.min - b.min);
+    
+    saveData();
+}
+
+// ============================================================================
 // AUTHENTICATION FUNCTIONS
 // ============================================================================
 
@@ -169,7 +275,19 @@ function getDefaultData() {
             { id: 1, name: 'Unassigned', order: 0 }
         ],
         allowanceHistory: [],
-        allowanceLog: []
+        allowanceLog: [],
+        colorScheme: {
+            positive: [
+                { min: 0, max: 20, color: '#3b82f6' },      // Blue
+                { min: 21, max: 50, color: '#10b981' },     // Green
+                { min: 51, max: 999999, color: '#8b5cf6' }  // Purple
+            ],
+            negative: [
+                { min: -20, max: -1, color: '#f59e0b' },    // Orange
+                { min: -50, max: -21, color: '#ef4444' },   // Red
+                { min: -999999, max: -51, color: '#7f1d1d' } // Dark Red
+            ]
+        }
     };
 }
 
@@ -183,7 +301,8 @@ let sectionVisibility = {
     settings: true,
     allowanceHistory: true,
     allowanceLog: true,
-    categoryManagement: true
+    categoryManagement: true,
+    colorScheme: true
 };
 
 let categoryVisibility = {};
@@ -205,7 +324,8 @@ function updateSectionVisibility() {
         { name: 'settings', contentId: 'settingsContent' },
         { name: 'allowanceHistory', contentId: 'allowanceHistoryContent' },
         { name: 'allowanceLog', contentId: 'allowanceLogContent' },
-        { name: 'categoryManagement', contentId: 'categoryManagementContent' }
+        { name: 'categoryManagement', contentId: 'categoryManagementContent' },
+        { name: 'colorScheme', contentId: 'colorSchemeContent' }
     ];
     
     sections.forEach(section => {
@@ -787,7 +907,8 @@ function updateDisplay() {
     document.getElementById('totalSpent').textContent = `$${spent.toFixed(2)}`;
     
     const availableBalanceDiv = document.getElementById('availableBalance');
-    availableBalanceDiv.innerHTML = `<span class="${available >= 0 ? 'positive' : 'negative'}">$${available.toFixed(2)}</span>`;
+    const balanceColor = getBalanceColor(available);
+    availableBalanceDiv.innerHTML = `<span style="color: ${balanceColor}; font-weight: bold;">$${available.toFixed(2)}</span>`;
     
     // Update spending list
     renderSpendingList();
@@ -806,6 +927,9 @@ function updateDisplay() {
     
     // Update allowance log
     renderAllowanceLog();
+    
+    // Update color scheme
+    renderColorScheme();
     
     // Update section visibility
     updateSectionVisibility();
@@ -1081,6 +1205,84 @@ function renderAllowanceLog() {
                 }
             }).join('');
     }
+}
+
+function renderColorScheme() {
+    const positiveList = document.getElementById('positiveRangesList');
+    const negativeList = document.getElementById('negativeRangesList');
+    
+    if (!positiveList || !negativeList) return;
+    
+    // Ensure color scheme exists
+    if (!data.colorScheme) {
+        data.colorScheme = getDefaultData().colorScheme;
+    }
+    
+    // Render positive ranges
+    positiveList.innerHTML = data.colorScheme.positive.map((range, index) => {
+        if (range.editing) {
+            return `
+                <li class="item">
+                    <div class="item-details">
+                        <input type="number" id="edit-positive-min-${index}" value="${range.min}" step="0.01" style="width: 80px; padding: 5px; margin-right: 5px;">
+                        <span>to</span>
+                        <input type="number" id="edit-positive-max-${index}" value="${range.max}" step="0.01" style="width: 80px; padding: 5px; margin: 0 5px;">
+                        <input type="color" id="edit-positive-color-${index}" value="${range.color}" style="width: 50px; height: 30px; margin-left: 5px;">
+                    </div>
+                    <div class="item-buttons">
+                        <button class="save-btn" onclick="saveColorRange('positive', ${index})">Save</button>
+                        <button class="delete-btn" onclick="deleteColorRange('positive', ${index})">Delete</button>
+                    </div>
+                </li>
+            `;
+        } else {
+            return `
+                <li class="item">
+                    <div class="item-details">
+                        <div class="item-name">$${range.min} to $${range.max}</div>
+                        <div style="width: 30px; height: 30px; background: ${range.color}; border: 2px solid #333; border-radius: 4px; margin-left: 10px;"></div>
+                    </div>
+                    <div class="item-buttons">
+                        <button class="edit-btn" onclick="editColorRange('positive', ${index})">Edit</button>
+                        <button class="delete-btn" onclick="deleteColorRange('positive', ${index})">Delete</button>
+                    </div>
+                </li>
+            `;
+        }
+    }).join('');
+    
+    // Render negative ranges
+    negativeList.innerHTML = data.colorScheme.negative.map((range, index) => {
+        if (range.editing) {
+            return `
+                <li class="item">
+                    <div class="item-details">
+                        <input type="number" id="edit-negative-min-${index}" value="${range.min}" step="0.01" style="width: 80px; padding: 5px; margin-right: 5px;">
+                        <span>to</span>
+                        <input type="number" id="edit-negative-max-${index}" value="${range.max}" step="0.01" style="width: 80px; padding: 5px; margin: 0 5px;">
+                        <input type="color" id="edit-negative-color-${index}" value="${range.color}" style="width: 50px; height: 30px; margin-left: 5px;">
+                    </div>
+                    <div class="item-buttons">
+                        <button class="save-btn" onclick="saveColorRange('negative', ${index})">Save</button>
+                        <button class="delete-btn" onclick="deleteColorRange('negative', ${index})">Delete</button>
+                    </div>
+                </li>
+            `;
+        } else {
+            return `
+                <li class="item">
+                    <div class="item-details">
+                        <div class="item-name">$${range.min} to $${range.max}</div>
+                        <div style="width: 30px; height: 30px; background: ${range.color}; border: 2px solid #333; border-radius: 4px; margin-left: 10px;"></div>
+                    </div>
+                    <div class="item-buttons">
+                        <button class="edit-btn" onclick="editColorRange('negative', ${index})">Edit</button>
+                        <button class="delete-btn" onclick="deleteColorRange('negative', ${index})">Delete</button>
+                    </div>
+                </li>
+            `;
+        }
+    }).join('');
 }
 
 // Initialize on page load

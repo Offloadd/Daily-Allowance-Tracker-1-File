@@ -183,6 +183,39 @@
                     <ul class="item-list" id="allowanceLogList"></ul>
                 </div>
             </div>
+            
+            <!-- Color Scheme Editor -->
+            <div class="settings-section">
+                <h2>
+                    <span>🎨 Available Balance Color Scheme</span>
+                    <button class="toggle-btn" onclick="toggleSection('colorScheme')">Hide</button>
+                </h2>
+                <div id="colorSchemeContent" class="collapsible-content">
+                    <p style="color: #6b7280; font-size: 0.9em; margin-bottom: 15px;">
+                        Set custom colors for different balance ranges. The Available Balance will change color based on your current balance.
+                    </p>
+                    
+                    <!-- Positive Ranges -->
+                    <h3 style="color: #667eea; margin-bottom: 10px; font-size: 1.1em;">Positive Balance Ranges</h3>
+                    <div class="input-group">
+                        <input type="number" id="positiveMin" placeholder="Min ($)" step="0.01" min="0" style="width: 100px;">
+                        <input type="number" id="positiveMax" placeholder="Max ($)" step="0.01" min="0" style="width: 100px;">
+                        <input type="color" id="positiveColor" value="#10b981" style="width: 60px; height: 40px;">
+                        <button onclick="addColorRange('positive')">Add Range</button>
+                    </div>
+                    <ul class="item-list" id="positiveRangesList"></ul>
+                    
+                    <!-- Negative Ranges -->
+                    <h3 style="color: #667eea; margin: 20px 0 10px 0; font-size: 1.1em;">Negative Balance Ranges</h3>
+                    <div class="input-group">
+                        <input type="number" id="negativeMin" placeholder="Min ($)" step="0.01" max="0" style="width: 100px;">
+                        <input type="number" id="negativeMax" placeholder="Max ($)" step="0.01" max="0" style="width: 100px;">
+                        <input type="color" id="negativeColor" value="#ef4444" style="width: 60px; height: 40px;">
+                        <button onclick="addColorRange('negative')">Add Range</button>
+                    </div>
+                    <ul class="item-list" id="negativeRangesList"></ul>
+                </div>
+            </div>
         </div>
     </div>
     

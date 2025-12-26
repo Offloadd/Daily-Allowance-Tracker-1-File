@@ -258,7 +258,7 @@ async function saveData() {
 }
 
 async function saveAndUpdate() {
-    await saveAndUpdate();
+    await saveData();
     updateDisplay();
 }
 
